@@ -1,35 +1,41 @@
-const connectDB = require("./config/db");
 const express = require("express");
 const cors = require("cors");
+const connectDB = require("./config/db");
 require("dotenv").config();
-
-const volunteerRoutes = require("./routes/volunteerRoutes");
-const partnerRoutes = require("./routes/partnerRoutes");
-const donationRoutes = require("./routes/donationRoutes");
 
 const app = express();
 
 // ===============================
-// ✅ CORS FIX (PRODUCTION READY)
+// DB CONNECTION FIRST (safe)
 // ===============================
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://astreefoundation.org",
-  "https://www.astreefoundation.org"
-];
+connectDB();
 
+// ===============================
+// BODY PARSER
+// ===============================
+app.use(express.json());
+
+// ===============================
+// CORS (ULTRA FIXED VERSION)
+// ===============================
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow server-to-server / postman requests
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "https://astreefoundation.org",
+        "https://www.astreefoundation.org"
+      ];
+
+      // allow mobile apps / postman
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
-      } else {
-        console.log("❌ CORS blocked request from:", origin);
-        return callback(null, false);
       }
+
+      console.log("❌ BLOCKED ORIGIN:", origin);
+      return callback(null, false);
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -37,50 +43,30 @@ app.use(
   })
 );
 
-// ✅ Handle preflight requests
+// ===============================
+// IMPORTANT: FORCE PREFLIGHT SUPPORT
+// ===============================
 app.options("*", cors());
 
 // ===============================
-// Middleware
+// ROUTES
 // ===============================
-app.use(express.json());
+app.use("/api/volunteer", require("./routes/volunteerRoutes"));
+app.use("/api/partner", require("./routes/partnerRoutes"));
+app.use("/api/donate", require("./routes/donationRoutes"));
 
 // ===============================
-// Database Connection
-// ===============================
-connectDB();
-
-// ===============================
-// Routes
-// ===============================
-app.use("/api/volunteer", volunteerRoutes);
-app.use("/api/partner", partnerRoutes);
-app.use("/api/donate", donationRoutes);
-
-// ===============================
-// Health Check
+// HEALTH CHECK
 // ===============================
 app.get("/", (req, res) => {
-  res.send("🚀 API Running Successfully");
+  res.send("API Running 🚀");
 });
 
 // ===============================
-// Optional Debug Route
-// ===============================
-app.get("/check", async (req, res) => {
-  try {
-    const data = await require("./models/Volunteer").find();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ===============================
-// Start Server
+// START SERVER
 // ===============================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
