@@ -3,23 +3,22 @@ const Donation = require("../models/Donation");
 // ✅ CREATE DONATION
 exports.createDonation = async (req, res) => {
   try {
-    const { name, email, phone, amount, paymentId } = req.body;
+    const { name, phone, amount, paymentId } = req.body;
 
-    if (!name || !email || !amount || isNaN(amount)) {
-      return res.status(400).json({
-        success: false,
-        message: "Valid name, email and amount are required"
-      });
-    }
+if (!name || !phone || !amount || isNaN(amount)) {
+  return res.status(400).json({
+    success: false,
+    message: "Valid name, phone and amount are required"
+  });
+}
 
     const newDonation = await Donation.create({
-      name,
-      email,
-      phone,
-      amount,
-      paymentId: paymentId || null,
-      status: "pending"
-    });
+  name,
+  phone,
+  amount,
+  paymentId: paymentId || null,
+  status: "pending"
+});
 
     res.status(201).json({
       success: true,
